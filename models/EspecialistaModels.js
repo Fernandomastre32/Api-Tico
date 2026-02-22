@@ -26,6 +26,12 @@ class Especialista {
         return result.rows[0];
     }
 
+    static async findByEmailForAuth(email) {
+        // Obtenemos la contraseña enhasheada para la verificación de autenticación
+        const result = await pool.query('SELECT * FROM especialistas WHERE email = $1 AND estado_activo = TRUE', [email]);
+        return result.rows[0];
+    }
+
     static async update(id, data) {
         const { nombre, email, especialidad_principal, rol_id } = data;
         const result = await pool.query(

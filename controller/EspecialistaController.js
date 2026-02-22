@@ -1,7 +1,50 @@
 import Especialista from '../models/EspecialistaModels.js';
 import { validationResult } from 'express-validator';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_key_123';
 
 class EspecialistaController {
+    static async login(req, res) {
+        try {
+            const { email, password } = req.body;
+            if (!email || !password) {
+                return res.status(400).json({ message: "Email y contraseña son requeridos" });
+            }
+
+            // 1. Validar usuario existe
+            const especialista = await Especialista.findByEmailForAuth(email);
+            if (!especialista) {
+                return res.status(401).json({ message: "Credenciales inválidas" }); // No especificar que el email fallo, solo "credenciales"
+            }
+
+            // 2. Hash con salt: Comparar bcrypt hash guardado con password
+            const isMatch = await bcrypt.compare(password, especialista.password);
+            if (!isMatch) {
+                return res.status(401).json({ message: "Credenciales inválidas" });
+            }
+
+            // 3. Gestión segura de sesiones: Crear token (corta expiración '1h')
+            const payload = {
+                id: especialista.id,
+                rol_id: especialista.rol_id,
+                especialidad: especialista.especialidad_principal
+            };
+
+            const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+
+            // Retornamos también las cookies seguras (opcional conceptual)
+            // res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
+
+            res.json({ message: "Autenticado con éxito", token });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
     static async getAllEspecialistas(req, res) {
         try {
             const especialistas = await Especialista.findAll();

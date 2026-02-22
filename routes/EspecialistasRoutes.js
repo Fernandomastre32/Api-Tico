@@ -46,7 +46,13 @@ const router = express.Router();
  *         description: Creado
  */
 
-router.get('/especialistas', EspecialistaController.getAllEspecialistas);
+import { verifyToken, authorize, checkOwnerOrAdmin } from '../middleware/authMiddleware.js';
+
+router.post('/login', EspecialistaController.login);
+
+// Denegación por defecto: Usar use() o colocar middlewares. Aquí protegemos todas las siguientes excepto POST y GET públicas.
+// Solo admin (ej. rol_id 1) o autenticados viendo sus recursos pueden acceder.
+router.get('/especialistas', verifyToken, authorize([1]), EspecialistaController.getAllEspecialistas);
 
 const createEspecialistaValidations = [
     body('nombre').notEmpty().withMessage('Nombre es requerido').trim().escape(),
@@ -55,6 +61,12 @@ const createEspecialistaValidations = [
     body('especialidad_principal').notEmpty().withMessage('Especialidad es requerida').trim().escape()
 ];
 
+// Creación podría ser abierta o solo de admin. En este ejemplo lo dejamos abierto (registro) pero con validación
 router.post('/especialistas', createEspecialistaValidations, EspecialistaController.createEspecialista);
+
+// Prevención de IDOR: Un especialista solo puede verse, editarse o borrarse a sí mismo, a menos que sea ADMIN (rol 1)
+router.get('/especialistas/:id', verifyToken, checkOwnerOrAdmin, EspecialistaController.getEspecialistaById);
+router.put('/especialistas/:id', verifyToken, checkOwnerOrAdmin, EspecialistaController.updateEspecialista);
+router.delete('/especialistas/:id', verifyToken, authorize([1]), EspecialistaController.deleteEspecialista); // Solo admin elimina
 
 export default router;

@@ -41,7 +41,7 @@ class EspecialistaController {
 
             res.json({ message: "Autenticado con éxito", token });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -50,7 +50,7 @@ class EspecialistaController {
             const especialistas = await Especialista.findAll();
             res.json({ message: "Lista de todos los Especialistas", data: especialistas });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -63,7 +63,7 @@ class EspecialistaController {
             const especialista = await Especialista.create(req.body);
             res.status(201).json({ message: "Especialista creado exitosamente", data: especialista });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -73,7 +73,7 @@ class EspecialistaController {
             if (!especialista) return res.status(404).json({ message: "Especialista no encontrado" });
             res.json({ message: "Especialista encontrado", data: especialista });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -83,7 +83,7 @@ class EspecialistaController {
             if (!especialista) return res.status(404).json({ message: "Especialista no encontrado" });
             res.json({ message: "Especialista actualizado", data: especialista });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -93,7 +93,7 @@ class EspecialistaController {
             if (!eliminado) return res.status(404).json({ message: "Especialista no encontrado" });
             res.json({ message: "Especialista desactivado correctamente", data: eliminado });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 }

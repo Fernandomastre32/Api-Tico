@@ -12,13 +12,25 @@ const options = {
         info: {
             title: 'API de Estudio AF', // Título de la documentación
             version: '1.0.0',           // Versión de la API
-            description: 'Documentación de API de Estudio AF',
+            description: 'Documentación de API de Estudio AF. NOTA: Para la mayoría de solicitudes POST/GET/PUT/DELETE debes usar un Token. Obtén uno en /api/login, luego clica el botón "Authorize" 🔒 en la parte superior e introdúcelo como Bearer Token.',
         },
         servers: [
             {
                 url: 'http://localhost:' + process.env.PORT, // URL base del servidor de la API
             },
         ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                }
+            }
+        },
+        security: [{
+            bearerAuth: []
+        }]
     },
     apis: ['./routes/*.js'], // Rutas donde están tus archivos de rutas para generar la documentación automáticamente
 };

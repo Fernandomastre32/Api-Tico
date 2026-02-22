@@ -6,7 +6,7 @@ class PacienteController {
             const pacientes = await Paciente.findAll();
             res.json({ message: "Lista de todos los Pacientes", data: pacientes });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -15,7 +15,7 @@ class PacienteController {
             const paciente = await Paciente.create(req.body);
             res.status(201).json({ message: "Paciente registrado", data: paciente });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -25,7 +25,7 @@ class PacienteController {
             if (!paciente) return res.status(404).json({ message: "Paciente no encontrado" });
             res.json({ message: "Datos del paciente obtenidos", data: paciente });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -34,7 +34,7 @@ class PacienteController {
             const paciente = await Paciente.update(req.params.id, req.body);
             res.json({ message: "Paciente actualizado correctamente", data: paciente });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -43,7 +43,7 @@ class PacienteController {
             const paciente = await Paciente.delete(req.params.id);
             res.json({ message: "Paciente eliminado del sistema", data: paciente });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 }

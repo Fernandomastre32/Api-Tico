@@ -6,7 +6,7 @@ class PagoController {
             const pagos = await Pago.findAll();
             res.json({ message: "Historial financiero global", data: pagos });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -15,7 +15,7 @@ class PagoController {
             const pago = await Pago.create(req.body);
             res.status(201).json({ message: "Pago registrado correctamente", data: pago });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -25,7 +25,7 @@ class PagoController {
             if (!pago) return res.status(404).json({ message: "Registro de pago no encontrado" });
             res.json({ message: "Detalle de pago obtenido", data: pago });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 }

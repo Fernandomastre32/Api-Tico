@@ -48,6 +48,32 @@ const router = express.Router();
 
 import { verifyToken, authorize, checkOwnerOrAdmin } from '../middleware/authMiddleware.js';
 
+/**
+ * @swagger
+ * /api/login:
+ *   post:
+ *     summary: Iniciar sesión para obtener Token JWT
+ *     description: Retorna un Token JWT. Cópialo y pégalo en el botón "Authorize" 🔒 en la parte superior.
+ *     tags: [Autenticación]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Autenticado con éxito (Retorna Token)
+ *       400:
+ *         description: Faltan credenciales
+ *       401:
+ *         description: Credenciales inválidas
+ */
 router.post('/login', EspecialistaController.login);
 
 // Denegación por defecto: Usar use() o colocar middlewares. Aquí protegemos todas las siguientes excepto POST y GET públicas.

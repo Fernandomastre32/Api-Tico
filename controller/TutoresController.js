@@ -6,7 +6,7 @@ class TutorController {
             const tutores = await Tutor.findAll();
             res.json({ message: "Lista de Tutores", data: tutores });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -15,7 +15,7 @@ class TutorController {
             const tutor = await Tutor.create(req.body);
             res.status(201).json({ message: "Tutor creado exitosamente", data: tutor });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 
@@ -25,7 +25,7 @@ class TutorController {
             if (!tutor) return res.status(404).json({ message: "Tutor no encontrado" });
             res.json({ message: "Tutor encontrado", data: tutor });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
 }

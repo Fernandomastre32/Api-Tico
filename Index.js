@@ -1,4 +1,6 @@
 import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
 import especialistaRoutes from './routes/EspecialistasRoutes.js';
 import pacienteRoutes from './routes/PacienteRoutes.js';
 import tutorRoutes from './routes/TutoresRoutes.js';
@@ -6,7 +8,13 @@ import citaRoutes from './routes/CitasRoutes.js';
 import pagoRoutes from './routes/PagoRoutes.js';
 import metricasIARoutes from './routes/MetricasRoutes.js';
 import swaggerDocs from './config/swagger.js';
+
 const app = express();
+
+// Seguridad en tránsito y cabeceras
+app.use(helmet());
+app.use(cors());
+
 app.use(express.json());
 
 // Definición de prefijos para la API

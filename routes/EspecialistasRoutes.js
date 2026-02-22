@@ -1,4 +1,5 @@
 import express from 'express';
+import { body } from 'express-validator';
 import EspecialistaController from '../controller/EspecialistaController.js';
 
 const router = express.Router();
@@ -46,6 +47,14 @@ const router = express.Router();
  */
 
 router.get('/especialistas', EspecialistaController.getAllEspecialistas);
-router.post('/especialistas', EspecialistaController.createEspecialista);
+
+const createEspecialistaValidations = [
+    body('nombre').notEmpty().withMessage('Nombre es requerido').trim().escape(),
+    body('email').isEmail().withMessage('Debe ser un email válido').normalizeEmail(),
+    body('password').isLength({ min: 8 }).withMessage('Contraseña mínimo 8 caracteres').trim(),
+    body('especialidad_principal').notEmpty().withMessage('Especialidad es requerida').trim().escape()
+];
+
+router.post('/especialistas', createEspecialistaValidations, EspecialistaController.createEspecialista);
 
 export default router;

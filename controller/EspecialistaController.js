@@ -1,4 +1,5 @@
 import Especialista from '../models/EspecialistaModels.js';
+import { validationResult } from 'express-validator';
 
 class EspecialistaController {
     static async getAllEspecialistas(req, res) {
@@ -12,6 +13,10 @@ class EspecialistaController {
 
     static async createEspecialista(req, res) {
         try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
+            }
             const especialista = await Especialista.create(req.body);
             res.status(201).json({ message: "Especialista creado exitosamente", data: especialista });
         } catch (error) {

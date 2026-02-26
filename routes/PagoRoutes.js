@@ -30,12 +30,18 @@
  *   get:
  *     summary: Lista todos los pagos
  *     tags: [Pagos]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Lista obtenida
+ *       401:
+ *         description: Token requerido
  *   post:
  *     summary: Registra un nuevo pago
  *     tags: [Pagos]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -45,11 +51,15 @@
  *     responses:
  *       201:
  *         description: Pago registrado
+ *       401:
+ *         description: Token requerido
  *
  * /api/pagos/{id}:
  *   get:
  *     summary: Obtiene un pago por ID
  *     tags: [Pagos]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -59,17 +69,20 @@
  *     responses:
  *       200:
  *         description: Pago encontrado
+ *       401:
+ *         description: Token requerido
  *       404:
  *         description: Pago no encontrado
  */
 
 import express from 'express';
 import PagoController from '../controller/PagoController.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/pagos', PagoController.getAllPagos);
-router.post('/pagos', PagoController.createPago);
-router.get('/pagos/:id', PagoController.getPagoById);
+router.get('/pagos', verifyToken, PagoController.getAllPagos);
+router.post('/pagos', verifyToken, PagoController.createPago);
+router.get('/pagos/:id', verifyToken, PagoController.getPagoById);
 
 export default router;

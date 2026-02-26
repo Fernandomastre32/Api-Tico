@@ -1,6 +1,8 @@
 import express from 'express';
 import { body } from 'express-validator';
 import EspecialistaController from '../controller/EspecialistaController.js';
+import { verifyToken, authorize, checkOwnerOrAdmin } from '../middleware/authMiddleware.js';
+import { loginRateLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
@@ -25,35 +27,10 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/especialistas:
- *   get:
- *     summary: Obtiene lista de especialistas
- *     tags: [Especialistas]
- *     responses:
- *       200:
- *         description: Éxito
- *   post:
- *     summary: Crea un especialista
- *     tags: [Especialistas]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Especialista'
- *     responses:
- *       201:
- *         description: Creado
- */
-
-import { verifyToken, authorize, checkOwnerOrAdmin } from '../middleware/authMiddleware.js';
-
-/**
- * @swagger
  * /api/login:
  *   post:
  *     summary: Iniciar sesión para obtener Token JWT
- *     description: Retorna un Token JWT. Cópialo y pégalo en el botón "Authorize" 🔒 en la parte superior.
+ *     description: Retorna un Token JWT. Máximo 5 intentos por IP cada 15 minutos. Cópialo y pégalo en el botón "Authorize" 🔒 en la parte superior.
  *     tags: [Autenticación]
  *     requestBody:
  *       required: true
@@ -73,11 +50,51 @@ import { verifyToken, authorize, checkOwnerOrAdmin } from '../middleware/authMid
  *         description: Faltan credenciales
  *       401:
  *         description: Credenciales inválidas
+ *       429:
+ *         description: Demasiados intentos. Rate limit activo.
  */
-router.post('/login', EspecialistaController.login);
+router.post('/login', loginRateLimiter, EspecialistaController.login);
 
-// Denegación por defecto: Usar use() o colocar middlewares. Aquí protegemos todas las siguientes excepto POST y GET públicas.
-// Solo admin (ej. rol_id 1) o autenticados viendo sus recursos pueden acceder.
+/**
+ * @swagger
+ * /api/logout:
+ *   post:
+ *     summary: Cerrar sesión e invalidar Token JWT
+ *     tags: [Autenticación]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Sesión cerrada correctamente
+ *       401:
+ *         description: Token requerido o inválido
+ */
+router.post('/logout', verifyToken, EspecialistaController.logout);
+
+/**
+ * @swagger
+ * /api/especialistas:
+ *   get:
+ *     summary: Obtiene lista de especialistas
+ *     tags: [Especialistas]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Éxito
+ *   post:
+ *     summary: Crea un especialista
+ *     tags: [Especialistas]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Especialista'
+ *     responses:
+ *       201:
+ *         description: Creado
+ */
 router.get('/especialistas', verifyToken, authorize([1]), EspecialistaController.getAllEspecialistas);
 
 const createEspecialistaValidations = [
@@ -87,12 +104,11 @@ const createEspecialistaValidations = [
     body('especialidad_principal').notEmpty().withMessage('Especialidad es requerida').trim().escape()
 ];
 
-// Creación podría ser abierta o solo de admin. En este ejemplo lo dejamos abierto (registro) pero con validación
 router.post('/especialistas', createEspecialistaValidations, EspecialistaController.createEspecialista);
 
-// Prevención de IDOR: Un especialista solo puede verse, editarse o borrarse a sí mismo, a menos que sea ADMIN (rol 1)
+// Protección IDOR: un especialista solo puede ver/editar su propio perfil, Admin puede todo
 router.get('/especialistas/:id', verifyToken, checkOwnerOrAdmin, EspecialistaController.getEspecialistaById);
 router.put('/especialistas/:id', verifyToken, checkOwnerOrAdmin, EspecialistaController.updateEspecialista);
-router.delete('/especialistas/:id', verifyToken, authorize([1]), EspecialistaController.deleteEspecialista); // Solo admin elimina
+router.delete('/especialistas/:id', verifyToken, authorize([1]), EspecialistaController.deleteEspecialista);
 
 export default router;

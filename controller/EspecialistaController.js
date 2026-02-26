@@ -3,31 +3,34 @@ import { validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { revokeToken } from '../middleware/authMiddleware.js';
+import { resetLoginAttempts } from '../middleware/rateLimiter.js';
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_key_123';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 class EspecialistaController {
     static async login(req, res) {
         try {
             const { email, password } = req.body;
             if (!email || !password) {
-                return res.status(400).json({ message: "Email y contraseña son requeridos" });
+                return res.status(400).json({ message: 'Email y contraseña son requeridos' });
             }
 
-            // 1. Validar usuario existe
             const especialista = await Especialista.findByEmailForAuth(email);
             if (!especialista) {
-                return res.status(401).json({ message: "Credenciales inválidas" }); // No especificar que el email fallo, solo "credenciales"
+                return res.status(401).json({ message: 'Credenciales inválidas' });
             }
 
-            // 2. Hash con salt: Comparar bcrypt hash guardado con password
             const isMatch = await bcrypt.compare(password, especialista.password);
             if (!isMatch) {
-                return res.status(401).json({ message: "Credenciales inválidas" });
+                return res.status(401).json({ message: 'Credenciales inválidas' });
             }
 
-            // 3. Gestión segura de sesiones: Crear token (corta expiración '1h')
+            // Login exitoso: reiniciar contador de intentos de esta IP
+            const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+            resetLoginAttempts(ip);
+
             const payload = {
                 id: especialista.id,
                 rol_id: especialista.rol_id,
@@ -36,21 +39,32 @@ class EspecialistaController {
 
             const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
 
-            // Retornamos también las cookies seguras (opcional conceptual)
-            // res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
-
-            res.json({ message: "Autenticado con éxito", token });
+            res.json({ message: 'Autenticado con éxito', token });
         } catch (error) {
-            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
+            // 🔒 Nunca exponer detalles del error interno al cliente
+            console.error('[LOGIN ERROR]', error);
+            res.status(500).json({ message: 'Error interno del servidor' });
+        }
+    }
+
+    static async logout(req, res) {
+        try {
+            // req.token fue guardado por verifyToken
+            revokeToken(req.token);
+            res.json({ message: 'Sesión cerrada correctamente. Token invalidado.' });
+        } catch (error) {
+            console.error('[LOGOUT ERROR]', error);
+            res.status(500).json({ message: 'Error interno del servidor' });
         }
     }
 
     static async getAllEspecialistas(req, res) {
         try {
             const especialistas = await Especialista.findAll();
-            res.json({ message: "Lista de todos los Especialistas", data: especialistas });
+            res.json({ message: 'Lista de todos los Especialistas', data: especialistas });
         } catch (error) {
-            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
+            console.error('[GET_ALL_ESPECIALISTAS ERROR]', error);
+            res.status(500).json({ message: 'Error interno del servidor' });
         }
     }
 
@@ -61,39 +75,43 @@ class EspecialistaController {
                 return res.status(400).json({ errors: errors.array() });
             }
             const especialista = await Especialista.create(req.body);
-            res.status(201).json({ message: "Especialista creado exitosamente", data: especialista });
+            res.status(201).json({ message: 'Especialista creado exitosamente', data: especialista });
         } catch (error) {
-            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
+            console.error('[CREATE_ESPECIALISTA ERROR]', error);
+            res.status(500).json({ message: 'Error interno del servidor' });
         }
     }
 
     static async getEspecialistaById(req, res) {
         try {
             const especialista = await Especialista.findById(req.params.id);
-            if (!especialista) return res.status(404).json({ message: "Especialista no encontrado" });
-            res.json({ message: "Especialista encontrado", data: especialista });
+            if (!especialista) return res.status(404).json({ message: 'Especialista no encontrado' });
+            res.json({ message: 'Especialista encontrado', data: especialista });
         } catch (error) {
-            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
+            console.error('[GET_ESPECIALISTA_BY_ID ERROR]', error);
+            res.status(500).json({ message: 'Error interno del servidor' });
         }
     }
 
     static async updateEspecialista(req, res) {
         try {
             const especialista = await Especialista.update(req.params.id, req.body);
-            if (!especialista) return res.status(404).json({ message: "Especialista no encontrado" });
-            res.json({ message: "Especialista actualizado", data: especialista });
+            if (!especialista) return res.status(404).json({ message: 'Especialista no encontrado' });
+            res.json({ message: 'Especialista actualizado', data: especialista });
         } catch (error) {
-            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
+            console.error('[UPDATE_ESPECIALISTA ERROR]', error);
+            res.status(500).json({ message: 'Error interno del servidor' });
         }
     }
 
     static async deleteEspecialista(req, res) {
         try {
             const eliminado = await Especialista.delete(req.params.id);
-            if (!eliminado) return res.status(404).json({ message: "Especialista no encontrado" });
-            res.json({ message: "Especialista desactivado correctamente", data: eliminado });
+            if (!eliminado) return res.status(404).json({ message: 'Especialista no encontrado' });
+            res.json({ message: 'Especialista desactivado correctamente', data: eliminado });
         } catch (error) {
-            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
+            console.error('[DELETE_ESPECIALISTA ERROR]', error);
+            res.status(500).json({ message: 'Error interno del servidor' });
         }
     }
 }

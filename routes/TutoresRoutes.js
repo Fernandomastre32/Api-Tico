@@ -1,5 +1,6 @@
 import express from 'express';
 import TutorController from '../controller/TutoresController.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -28,11 +29,15 @@ const router = express.Router();
  *   get:
  *     summary: Listar tutores
  *     tags: [Tutores]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: OK
+ *       401:
+ *         description: Token requerido
  */
 
-router.get('/tutores', TutorController.getAllTutores);
+router.get('/tutores', verifyToken, TutorController.getAllTutores);
 
 export default router;

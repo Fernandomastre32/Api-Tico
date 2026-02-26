@@ -1,5 +1,6 @@
 import express from 'express';
-import PacienteController from '../controller/Pacientescontroller.js';
+import PacienteController from '../controller/PacientesController.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -28,12 +29,18 @@ const router = express.Router();
  *   get:
  *     summary: Lista de pacientes
  *     tags: [Pacientes]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: OK
+ *       401:
+ *         description: Token requerido
  *   post:
  *     summary: Crear paciente
  *     tags: [Pacientes]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -43,9 +50,11 @@ const router = express.Router();
  *     responses:
  *       201:
  *         description: Paciente creado
+ *       401:
+ *         description: Token requerido
  */
 
-router.get('/pacientes', PacienteController.getAllPacientes);
-router.post('/pacientes', PacienteController.createPaciente);
+router.get('/pacientes', verifyToken, PacienteController.getAllPacientes);
+router.post('/pacientes', verifyToken, PacienteController.createPaciente);
 
 export default router;

@@ -30,6 +30,8 @@
  *   post:
  *     summary: Registra una nueva métrica de IA
  *     tags: [Métricas IA]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -39,14 +41,35 @@
  *     responses:
  *       201:
  *         description: Métrica creada
+ *       401:
+ *         description: Token requerido
+ *
+ * /api/metricas-ia/paciente/{pacienteId}:
+ *   get:
+ *     summary: Obtiene métricas de un paciente
+ *     tags: [Métricas IA]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: pacienteId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Métricas encontradas
+ *       401:
+ *         description: Token requerido
  */
 
 import express from 'express';
 import MetricasIAController from '../controller/MetricasController.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/metricas-ia', MetricasIAController.createMetrica);
-router.get('/metricas-ia/paciente/:pacienteId', MetricasIAController.getByPaciente);
+router.post('/metricas-ia', verifyToken, MetricasIAController.createMetrica);
+router.get('/metricas-ia/paciente/:pacienteId', verifyToken, MetricasIAController.getByPaciente);
 
 export default router;

@@ -1,5 +1,6 @@
 import express from 'express';
 import CitaController from '../controller/CitasController.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -29,12 +30,18 @@ const router = express.Router();
  *   get:
  *     summary: Obtiene todas las citas
  *     tags: [Citas]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Lista de citas obtenida
+ *       401:
+ *         description: Token requerido
  *   post:
  *     summary: Crea una nueva cita
  *     tags: [Citas]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -44,9 +51,11 @@ const router = express.Router();
  *     responses:
  *       201:
  *         description: Cita creada
+ *       401:
+ *         description: Token requerido
  */
 
-router.get('/citas', CitaController.getAllCitas);
-router.post('/citas', CitaController.createCita);
+router.get('/citas', verifyToken, CitaController.getAllCitas);
+router.post('/citas', verifyToken, CitaController.createCita);
 
 export default router;

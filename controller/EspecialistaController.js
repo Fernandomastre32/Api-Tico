@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { revokeToken } from '../middleware/authMiddleware.js';
 import { resetLoginAttempts } from '../middleware/rateLimiter.js';
+import { verificarCedulaSEP } from '../utils/sepValidator.js';
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -39,7 +40,17 @@ class EspecialistaController {
 
             const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
 
-            res.json({ message: 'Autenticado con éxito', token });
+            res.json({
+                message: 'Autenticado con éxito',
+                token,
+                user: {
+                    id: especialista.id,
+                    nombre: especialista.nombre,
+                    email: especialista.email,
+                    rol_id: especialista.rol_id,
+                    especialidad: especialista.especialidad_principal,
+                }
+            });
         } catch (error) {
             // 🔒 Nunca exponer detalles del error interno al cliente
             console.error('[LOGIN ERROR]', error);
@@ -74,6 +85,9 @@ class EspecialistaController {
             if (!errors.isEmpty()) {
                 return res.status(400).json({ errors: errors.array() });
             }
+            if (req.body.cedula_profesional) {
+                req.body.cedula_verificada = await verificarCedulaSEP(req.body.cedula_profesional);
+            }
             const especialista = await Especialista.create(req.body);
             res.status(201).json({ message: 'Especialista creado exitosamente', data: especialista });
         } catch (error) {
@@ -95,6 +109,9 @@ class EspecialistaController {
 
     static async updateEspecialista(req, res) {
         try {
+            if (req.body.cedula_profesional) {
+                req.body.cedula_verificada = await verificarCedulaSEP(req.body.cedula_profesional);
+            }
             const especialista = await Especialista.update(req.params.id, req.body);
             if (!especialista) return res.status(404).json({ message: 'Especialista no encontrado' });
             res.json({ message: 'Especialista actualizado', data: especialista });

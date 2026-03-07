@@ -38,11 +38,20 @@ class Especialista {
     }
 
     static async update(id, data) {
-        const { nombre, email, especialidad_principal, rol_id, cedula_profesional, cedula_verificada } = data;
-        const result = await pool.query(
-            'UPDATE especialistas SET nombre = $1, email = $2, especialidad_principal = $3, rol_id = $4, cedula_profesional = $5, cedula_verificada = $6 WHERE id = $7 RETURNING id, nombre, email, especialidad_principal, rol_id, estado_activo, cedula_profesional, cedula_verificada',
-            [nombre, email, especialidad_principal, rol_id, cedula_profesional || null, cedula_verificada || false, id]
-        );
+        const { nombre, email, especialidad_principal, rol_id, cedula_profesional, cedula_verificada, estado_activo } = data;
+
+        let queryStr = 'UPDATE especialistas SET nombre = $1, email = $2, especialidad_principal = $3, rol_id = $4, cedula_profesional = $5, cedula_verificada = $6';
+        let queryParams = [nombre, email, especialidad_principal, rol_id, cedula_profesional || null, cedula_verificada || false];
+
+        if (estado_activo !== undefined) {
+            queryStr += `, estado_activo = $7`;
+            queryParams.push(estado_activo);
+        }
+
+        queryStr += ` WHERE id = $${queryParams.length + 1} RETURNING id, nombre, email, especialidad_principal, rol_id, estado_activo, cedula_profesional, cedula_verificada`;
+        queryParams.push(id);
+
+        const result = await pool.query(queryStr, queryParams);
         return result.rows[0];
     }
 

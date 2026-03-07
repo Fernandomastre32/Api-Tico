@@ -57,6 +57,32 @@ router.post('/login', loginRateLimiter, EspecialistaController.login);
 
 /**
  * @swagger
+ * /api/verify-2fa:
+ *   post:
+ *     summary: Autenticación de doble factor
+ *     description: Valida el código de 6 dígitos enviado por correo para completar el inicio de sesión.
+ *     tags: [Autenticación]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               code:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Autenticado con éxito (Retorna Token)
+ *       401:
+ *         description: Código inválido o expirado
+ */
+router.post('/verify-2fa', EspecialistaController.verify2FA);
+
+/**
+ * @swagger
  * /api/logout:
  *   post:
  *     summary: Cerrar sesión e invalidar Token JWT

@@ -6,9 +6,14 @@ import dotenv from 'dotenv';
 import { revokeToken } from '../middleware/authMiddleware.js';
 import { resetLoginAttempts } from '../middleware/rateLimiter.js';
 import { verificarCedulaSEP } from '../utils/sepValidator.js';
+import { send2FACode } from '../utils/emailService.js';
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
+
+// Almacén temporal para los códigos 2FA (en producción usar Redis o DB)
+// Estructura: { email: { code, expiresAt, userPayload } }
+const temporaryCodes = new Map();
 
 class EspecialistaController {
     static async login(req, res) {
@@ -28,32 +33,92 @@ class EspecialistaController {
                 return res.status(401).json({ message: 'Credenciales inválidas' });
             }
 
-            // Login exitoso: reiniciar contador de intentos de esta IP
+            // Login exitoso credenciales: reiniciar contador de intentos
             const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
             resetLoginAttempts(ip);
 
-            const payload = {
+            // Generar código 2FA de 6 dígitos
+            const code2FA = Math.floor(100000 + Math.random() * 900000).toString();
+
+            // Guardar payload para usarlo tras verificar el código
+            const userPayload = {
                 id: especialista.id,
+                nombre: especialista.nombre,
+                email: especialista.email,
                 rol_id: especialista.rol_id,
-                especialidad: especialista.especialidad_principal
+                especialidad: especialista.especialidad_principal,
             };
 
-            const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+            // Almacenar el código con una caducidad de 10 minutos
+            temporaryCodes.set(email, {
+                code: code2FA,
+                expiresAt: Date.now() + 10 * 60 * 1000,
+                userPayload
+            });
+
+            // Enviar correo (asíncrono, no bloqueamos la respuesta inmediata)
+            try {
+                // Siempre envía a jerrymoralesrivera@gmail.com como pidió el cliente
+                await send2FACode(code2FA);
+                console.log(`[2FA] Código ${code2FA} enviado para ${email}`);
+            } catch (emailErr) {
+                console.error('[2FA EMAIL ERROR]', emailErr.message);
+                return res.status(500).json({ message: 'Error al enviar código de verificación por correo. Revisa la configuración SMTP.' });
+            }
+
+            // Retornamos estado 2FA en vez del JWT
+            res.json({
+                message: 'Credenciales correctas. Código 2FA enviado.',
+                require2FA: true,
+                email: email
+            });
+        } catch (error) {
+            console.error('[LOGIN ERROR]', error);
+            res.status(500).json({ message: 'Error interno del servidor' });
+        }
+    }
+
+    static async verify2FA(req, res) {
+        try {
+            const { email, code } = req.body;
+
+            if (!email || !code) {
+                return res.status(400).json({ message: 'Email y código son requeridos' });
+            }
+
+            const tempSession = temporaryCodes.get(email);
+            if (!tempSession) {
+                return res.status(401).json({ message: 'Sesión expirada o código inválido (no encontrado)' });
+            }
+
+            if (Date.now() > tempSession.expiresAt) {
+                temporaryCodes.delete(email);
+                return res.status(401).json({ message: 'El código de verificación ha expirado' });
+            }
+
+            if (tempSession.code !== code) {
+                return res.status(401).json({ message: 'Código incorrecto' });
+            }
+
+            // Código válido: eliminarlo de memoria para evitar reusos
+            temporaryCodes.delete(email);
+
+            // Generar JWT
+            const payloadToken = {
+                id: tempSession.userPayload.id,
+                rol_id: tempSession.userPayload.rol_id,
+                especialidad: tempSession.userPayload.especialidad
+            };
+
+            const token = jwt.sign(payloadToken, JWT_SECRET, { expiresIn: '1h' });
 
             res.json({
                 message: 'Autenticado con éxito',
                 token,
-                user: {
-                    id: especialista.id,
-                    nombre: especialista.nombre,
-                    email: especialista.email,
-                    rol_id: especialista.rol_id,
-                    especialidad: especialista.especialidad_principal,
-                }
+                user: tempSession.userPayload
             });
         } catch (error) {
-            // 🔒 Nunca exponer detalles del error interno al cliente
-            console.error('[LOGIN ERROR]', error);
+            console.error('[VERIFY_2FA ERROR]', error);
             res.status(500).json({ message: 'Error interno del servidor' });
         }
     }
@@ -109,11 +174,17 @@ class EspecialistaController {
 
     static async updateEspecialista(req, res) {
         try {
+            const existing = await Especialista.findById(req.params.id);
+            if (!existing) return res.status(404).json({ message: 'Especialista no encontrado' });
+
+            // Mezclar datos existentes con los nuevos para soportar actualizaciones parciales (ej. reactivación)
+            const dataToUpdate = { ...existing, ...req.body };
+
             if (req.body.cedula_profesional) {
-                req.body.cedula_verificada = await verificarCedulaSEP(req.body.cedula_profesional);
+                dataToUpdate.cedula_verificada = await verificarCedulaSEP(req.body.cedula_profesional);
             }
-            const especialista = await Especialista.update(req.params.id, req.body);
-            if (!especialista) return res.status(404).json({ message: 'Especialista no encontrado' });
+
+            const especialista = await Especialista.update(req.params.id, dataToUpdate);
             res.json({ message: 'Especialista actualizado', data: especialista });
         } catch (error) {
             console.error('[UPDATE_ESPECIALISTA ERROR]', error);

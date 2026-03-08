@@ -57,5 +57,6 @@ const router = express.Router();
 
 router.get('/citas', verifyToken, CitaController.getAllCitas);
 router.post('/citas', verifyToken, CitaController.createCita);
+router.put('/citas/:id', verifyToken, CitaController.updateCita);
 
 export default router;

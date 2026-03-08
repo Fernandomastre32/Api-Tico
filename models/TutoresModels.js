@@ -19,6 +19,15 @@ class Tutor {
         const result = await pool.query('SELECT * FROM tutores WHERE id = $1', [id]);
         return result.rows[0];
     }
+
+    static async update(id, data) {
+        const { nombre, parentesco, email, telefono } = data;
+        const result = await pool.query(
+            'UPDATE tutores SET nombre = $1, parentesco = $2, email = $3, telefono = $4 WHERE id = $5 RETURNING *',
+            [nombre, parentesco, email, telefono, id]
+        );
+        return result.rows[0];
+    }
 }
 
 export default Tutor;

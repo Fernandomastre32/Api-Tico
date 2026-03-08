@@ -3,6 +3,7 @@ import { validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 import { revokeToken } from '../middleware/authMiddleware.js';
 import { resetLoginAttempts } from '../middleware/rateLimiter.js';
 import { verificarCedulaSEP } from '../utils/sepValidator.js';
@@ -103,11 +104,18 @@ class EspecialistaController {
             // Código válido: eliminarlo de memoria para evitar reusos
             temporaryCodes.delete(email);
 
-            // Generar JWT
+            // Generar UUID de sesión único para este login
+            const sessionId = crypto.randomUUID();
+
+            // Guardar UUID en la base de datos (se usará Especialista.updateSession)
+            await Especialista.updateSession(tempSession.userPayload.id, sessionId);
+
+            // Generar JWT incluyendo el sessionId
             const payloadToken = {
                 id: tempSession.userPayload.id,
                 rol_id: tempSession.userPayload.rol_id,
-                especialidad: tempSession.userPayload.especialidad
+                especialidad: tempSession.userPayload.especialidad,
+                sessionId: sessionId
             };
 
             const token = jwt.sign(payloadToken, JWT_SECRET, { expiresIn: '1h' });
@@ -125,8 +133,14 @@ class EspecialistaController {
 
     static async logout(req, res) {
         try {
-            // req.token fue guardado por verifyToken
+            // req.token y req.user fueron guardados por verifyToken
             revokeToken(req.token);
+
+            // Invalidar el UUID en la base de datos para que este y otros tokens de la misma sesión mueran
+            if (req.user && req.user.id) {
+                await Especialista.updateSession(req.user.id, null);
+            }
+
             res.json({ message: 'Sesión cerrada correctamente. Token invalidado.' });
         } catch (error) {
             console.error('[LOGOUT ERROR]', error);

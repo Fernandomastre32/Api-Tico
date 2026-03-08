@@ -5,7 +5,8 @@ class Especialista {
     static async findAll() {
         const result = await pool.query(
             `SELECT id, nombre, email, especialidad_principal, rol_id, estado_activo,
-                    telefono, cedula_profesional, cedula_verificada
+                    telefono, cedula_profesional, cedula_verificada, 
+                    (session_token IS NOT NULL) AS en_linea
              FROM especialistas
              ORDER BY id ASC`
         );
@@ -61,6 +62,11 @@ class Especialista {
             [id]
         );
         return result.rows[0];
+    }
+
+    static async updateSession(id, sessionToken) {
+        console.log(`[DEBUG] updateSession ejecutando -> id: ${id}, token: ${sessionToken}`);
+        await pool.query('UPDATE especialistas SET session_token = $1 WHERE id = $2', [sessionToken, id]);
     }
 }
 

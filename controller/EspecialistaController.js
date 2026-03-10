@@ -48,6 +48,7 @@ class EspecialistaController {
                 email: especialista.email,
                 rol_id: especialista.rol_id,
                 especialidad: especialista.especialidad_principal,
+                foto_url: especialista.foto_url,
             };
 
             // Almacenar el código con una caducidad de 10 minutos
@@ -115,6 +116,7 @@ class EspecialistaController {
                 id: tempSession.userPayload.id,
                 rol_id: tempSession.userPayload.rol_id,
                 especialidad: tempSession.userPayload.especialidad,
+                foto_url: tempSession.userPayload.foto_url,
                 sessionId: sessionId
             };
 

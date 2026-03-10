@@ -8,7 +8,9 @@ import tutorRoutes from './routes/TutoresRoutes.js';
 import citaRoutes from './routes/CitasRoutes.js';
 import pagoRoutes from './routes/PagoRoutes.js';
 import metricasIARoutes from './routes/MetricasRoutes.js';
+import uploadRoutes from './routes/UploadRoutes.js';
 import swaggerDocs from './config/swagger.js';
+import path from 'path';
 
 /* =========================================================================================
    GUÍA DE SEGURIDAD (TOKEN JWT) Y ROLES PARA interactuar o usar POST/GET/DELETE:
@@ -37,7 +39,9 @@ if (!process.env.JWT_SECRET) {
 const app = express();
 
 // ─── Seguridad en cabeceras HTTP ───────────────────────────────────────────
-app.use(helmet());
+app.use(helmet({
+   crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // ─── CORS: solo permitir el origen del frontend ───────────────────────────
 // Ajusta el origin a la URL de tu frontend React (Vite usa 5173, CRA usa 3001)
@@ -62,6 +66,10 @@ app.use(cors({
 
 app.use(express.json());
 
+// ─── Rutas estáticas para uploads ──────────────────────────────────────────
+// Configura la carpeta 'uploads' para que sea accesible públicamente por HTTP
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 // ─── Rutas de la API ───────────────────────────────────────────────────────
 app.use('/api', especialistaRoutes);
 app.use('/api', pacienteRoutes);
@@ -69,6 +77,7 @@ app.use('/api', tutorRoutes);
 app.use('/api', citaRoutes);
 app.use('/api', pagoRoutes);
 app.use('/api', metricasIARoutes);
+app.use('/api', uploadRoutes); // Añadimos endpoint de subida
 swaggerDocs(app);
 
 // ─── Manejador global de errores ──────────────────────────────────────────

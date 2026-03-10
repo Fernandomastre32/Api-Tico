@@ -3,6 +3,7 @@ import { validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 import { revokeToken } from '../middleware/authMiddleware.js';
 import { resetLoginAttempts } from '../middleware/rateLimiter.js';
 import { verificarCedulaSEP } from '../utils/sepValidator.js';
@@ -47,6 +48,7 @@ class EspecialistaController {
                 email: especialista.email,
                 rol_id: especialista.rol_id,
                 especialidad: especialista.especialidad_principal,
+                foto_url: especialista.foto_url,
             };
 
             // Almacenar el código con una caducidad de 10 minutos
@@ -103,11 +105,19 @@ class EspecialistaController {
             // Código válido: eliminarlo de memoria para evitar reusos
             temporaryCodes.delete(email);
 
-            // Generar JWT
+            // Generar UUID de sesión único para este login
+            const sessionId = crypto.randomUUID();
+
+            // Guardar UUID en la base de datos (se usará Especialista.updateSession)
+            await Especialista.updateSession(tempSession.userPayload.id, sessionId);
+
+            // Generar JWT incluyendo el sessionId
             const payloadToken = {
                 id: tempSession.userPayload.id,
                 rol_id: tempSession.userPayload.rol_id,
-                especialidad: tempSession.userPayload.especialidad
+                especialidad: tempSession.userPayload.especialidad,
+                foto_url: tempSession.userPayload.foto_url,
+                sessionId: sessionId
             };
 
             const token = jwt.sign(payloadToken, JWT_SECRET, { expiresIn: '1h' });
@@ -125,8 +135,14 @@ class EspecialistaController {
 
     static async logout(req, res) {
         try {
-            // req.token fue guardado por verifyToken
+            // req.token y req.user fueron guardados por verifyToken
             revokeToken(req.token);
+
+            // Invalidar el UUID en la base de datos para que este y otros tokens de la misma sesión mueran
+            if (req.user && req.user.id) {
+                await Especialista.updateSession(req.user.id, null);
+            }
+
             res.json({ message: 'Sesión cerrada correctamente. Token invalidado.' });
         } catch (error) {
             console.error('[LOGOUT ERROR]', error);
@@ -200,6 +216,46 @@ class EspecialistaController {
         } catch (error) {
             console.error('[DELETE_ESPECIALISTA ERROR]', error);
             res.status(500).json({ message: 'Error interno del servidor' });
+        }
+    }
+     static async loginUnity(req, res) {
+        try {
+            const { usuario, password } = req.body;
+            const especialista = await Especialista.buscarPorUsuarioOCorreo(usuario);
+
+            // Logging de depuración para ver qué datos llegan y qué responde la base de datos
+            console.log("--- INTENTO DE LOGIN (ESPECIALISTA) ---");
+            console.log("1. Datos desde Unity -> Usuario:", usuario, " | Password:", password);
+            console.log("2. Datos desde BD ->", especialista);
+
+            if (!especialista) {
+                console.log("❌ FALLA: El usuario/correo no existe en la base de datos.");
+                return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
+            }
+
+            const isMatch = await bcrypt.compare(password, especialista.password);
+
+            if (!isMatch) {
+                console.log("❌ FALLA: La contraseña ingresada no coincide con la de la BD.");
+                return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
+            }
+
+            console.log("✅ ÉXITO: Usuario y contraseña correctos. Generando token...");
+
+            const token = jwt.sign(
+                { id: especialista.id, rol_id: especialista.rol_id },
+                process.env.JWT_SECRET,
+                { expiresIn: '8h' }
+            );
+
+            res.status(200).json({
+                mensaje: "Login exitoso",
+                token: token,
+                nombre: especialista.nombre
+            });
+        } catch (error) {
+            console.error('[LOGIN_UNITY ERROR]', error);
+            res.status(500).json({ error: "Error interno del servidor" });
         }
     }
 }

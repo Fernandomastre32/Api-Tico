@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import Especialista from '../models/EspecialistaModels.js';
+import pool from '../config/db.js';
 dotenv.config();
 
 // 🔐 JWT_SECRET OBLIGATORIO — Si no está en .env, la app no debe arrancar
@@ -27,7 +29,7 @@ export const revokeToken = (token) => {
 /**
  * Middleware para verificar JWT y establecer sesión segura.
  */
-export const verifyToken = (req, res, next) => {
+export const verifyToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
         return res.status(401).json({ message: 'Acceso denegado: Token requerido' });
@@ -45,6 +47,26 @@ export const verifyToken = (req, res, next) => {
 
     try {
         const verified = jwt.verify(token, JWT_SECRET);
+
+        // Verificación ESTRICTA de sesión: Si no tiene UUID, es un token viejo y debe ser dado de baja
+        if (!verified.sessionId) {
+            return res.status(401).json({ message: 'La sesión es antigua o inválida. Seguridad de Token UUID requerida. Inicia sesión nuevamente.' });
+        }
+
+        // Verificación UUID contra la Base de Datos
+        const { rowCount, rows } = await pool.query('SELECT session_token FROM especialistas WHERE id = $1', [verified.id]);
+
+        if (rowCount === 0) {
+            return res.status(401).json({ message: 'Acceso denegado: Usuario no encontrado' });
+        }
+
+        const activeSessionToken = rows[0].session_token;
+
+        // Si el token es nulo o no coincide con el del JWT, la sesión fue invalidada
+        if (!activeSessionToken || activeSessionToken !== verified.sessionId) {
+            return res.status(401).json({ message: 'Acceso denegado: Sesión invalidada. Inicia sesión nuevamente' });
+        }
+
         req.user = verified;
         req.token = token; // Guardamos el token para poder revocarlo en logout
         next();

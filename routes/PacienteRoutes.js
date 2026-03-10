@@ -56,5 +56,6 @@ const router = express.Router();
 
 router.get('/pacientes', verifyToken, PacienteController.getAllPacientes);
 router.post('/pacientes', verifyToken, PacienteController.createPaciente);
+router.put('/pacientes/:id', verifyToken, PacienteController.updatePaciente);
 
 export default router;

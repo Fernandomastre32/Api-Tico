@@ -39,5 +39,6 @@ const router = express.Router();
  */
 
 router.get('/tutores', verifyToken, TutorController.getAllTutores);
+router.post('/tutores/login-unity', TutorController.loginUnity);
 
 export default router;

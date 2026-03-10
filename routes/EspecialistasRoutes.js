@@ -122,6 +122,8 @@ router.post('/logout', verifyToken, EspecialistaController.logout);
  *         description: Creado
  */
 router.get('/especialistas', verifyToken, authorize([1]), EspecialistaController.getAllEspecialistas);
+router.post('/login-unity', EspecialistaController.loginUnity);
+
 
 const createEspecialistaValidations = [
     body('nombre').notEmpty().withMessage('Nombre es requerido').trim().escape(),

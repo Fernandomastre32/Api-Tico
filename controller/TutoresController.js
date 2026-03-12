@@ -2,6 +2,8 @@ import Tutor from '../models/TutoresModels.js';
 import Paciente from '../models/PacienteModels.js'; // Necesario porque buscas los pacientes abajo
 import jwt from 'jsonwebtoken'; // Necesario para crear el token
 // import bcrypt from 'bcrypt'; // COMENTADO POR AHORA: Lo usaremos cuando las contraseñas en BD estén encriptadas
+import crypto from 'crypto'; // NUEVO: Herramienta para generar el UUID
+
 
 class TutorController {
     static async loginUnity(req, res) {
@@ -20,7 +22,7 @@ class TutorController {
             }
 
             console.log("3. Comparando contraseñas...");
-            
+
             // VALIDACIÓN TEMPORAL: Comparación en texto plano (sin bcrypt)
             if (password !== tutor.password) {
                 console.log("❌ FALLA: Las contraseñas no coinciden");
@@ -34,7 +36,11 @@ class TutorController {
 
             // Crear el token de seguridad
             const token = jwt.sign(
-                { id: tutor.id, type: 'tutor' },
+                {
+                    id: tutor.id,
+                    type: 'tutor',
+                    uuid: crypto.randomUUID()
+                },
                 process.env.JWT_SECRET,
                 { expiresIn: '8h' }
             );

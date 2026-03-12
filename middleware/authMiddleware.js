@@ -48,6 +48,13 @@ export const verifyToken = async (req, res, next) => {
     try {
         const verified = jwt.verify(token, JWT_SECRET);
 
+        // Excepción: Los tutores desde Unity no tienen tabla session_token aún.
+        if (verified.type === 'tutor') {
+            req.user = verified;
+            req.token = token;
+            return next();
+        }
+
         // Verificación ESTRICTA de sesión: Si no tiene UUID, es un token viejo y debe ser dado de baja
         if (!verified.sessionId) {
             return res.status(401).json({ message: 'La sesión es antigua o inválida. Seguridad de Token UUID requerida. Inicia sesión nuevamente.' });

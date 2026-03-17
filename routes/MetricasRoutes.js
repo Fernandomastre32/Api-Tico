@@ -69,6 +69,7 @@ import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+router.get('/metricas-ia', verifyToken, MetricasIAController.getAllMetricas);
 router.post('/metricas-ia', verifyToken, MetricasIAController.createMetrica);
 router.get('/metricas-ia/paciente/:pacienteId', verifyToken, MetricasIAController.getByPaciente);
 

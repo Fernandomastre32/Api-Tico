@@ -3,12 +3,15 @@ import { encryptData, decryptData } from '../utils/cryptoHelper.js';
 
 class Pago {
     static async findAll() {
-        const result = await pool.query('SELECT * FROM pagos');
-        // Ejemplo de Tokenización / Enmascaramiento: Mostrar solo parte de los datos decifrados.
+        const result = await pool.query('SELECT * FROM pagos ORDER BY fecha_pago DESC');
         return result.rows.map(pago => {
-            const dec = decryptData(pago.metodo_pago);
-            if (dec && dec.length > 4) pago.metodo_pago = '****' + dec.slice(-4);
-            else pago.metodo_pago = dec;
+            try {
+                const dec = decryptData(pago.metodo_pago);
+                if (dec && dec.length > 4) pago.metodo_pago = '****' + dec.slice(-4);
+                else pago.metodo_pago = dec;
+            } catch (e) {
+                pago.metodo_pago = 'Invalid Data';
+            }
             return pago;
         });
     }

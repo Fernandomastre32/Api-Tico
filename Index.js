@@ -46,8 +46,9 @@ app.use(helmet({
 // ─── CORS: solo permitir el origen del frontend ───────────────────────────
 // Ajusta el origin a la URL de tu frontend React (Vite usa 5173, CRA usa 3001)
 const allowedOrigins = [
-   'http://localhost:5173',  // React + Vite
-   'http://localhost:3001',  // React CRA
+   'http://localhost:5173',  // React + Vite (default)
+   'http://localhost:5174',  // React + Vite (fallback, cuando 5173 está ocupado)
+   'http://localhost:3000',  // React CRA
    'http://localhost:4200',  // Angular (por compatibilidad)
 ];
 

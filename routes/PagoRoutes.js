@@ -84,5 +84,7 @@ const router = express.Router();
 router.get('/pagos', verifyToken, PagoController.getAllPagos);
 router.post('/pagos', verifyToken, PagoController.createPago);
 router.get('/pagos/:id', verifyToken, PagoController.getPagoById);
+router.put('/pagos/:id', verifyToken, PagoController.updatePago);
+router.delete('/pagos/:id', verifyToken, PagoController.deletePago);
 
 export default router;

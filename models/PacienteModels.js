@@ -3,7 +3,11 @@ import pool from '../config/db.js';
 class Paciente {
     static async findAll() {
         const query = `
-            SELECT p.*, t.nombre AS tutor_nombre 
+            SELECT p.*, 
+                t.nombre AS tutor_nombre,
+                t.parentesco AS tutor_parentesco,
+                t.telefono AS tutor_telefono,
+                t.email AS tutor_email
             FROM pacientes p 
             LEFT JOIN tutores t ON p.tutor_id = t.id
             ORDER BY p.id DESC

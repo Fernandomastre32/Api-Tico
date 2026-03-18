@@ -17,7 +17,8 @@ class PacienteController {
                 nombre: req.body.tutor_nombre,
                 parentesco: req.body.tutor_parentesco,
                 email: req.body.tutor_email,
-                telefono: req.body.tutor_telefono
+                telefono: req.body.tutor_telefono,
+                password: req.body.tutor_password
             };
             const tutor = await Tutor.create(tutorData);
 
@@ -65,15 +66,15 @@ class PacienteController {
             const existing = await Paciente.findById(req.params.id);
             if (!existing) return res.status(404).json({ message: "Paciente no encontrado" });
 
-            // 1. Actualizar el tutor asociado (si existe_tutor_id y enviaron datos)
+            // 1. Actualizar el tutor asociado — primero obtener datos actuales para no pisar
             if (existing.tutor_id) {
-                // Hay que mezclar o enviar los nuevos, si no enviaron en el body se deja como está temporalmente
-                // (Para que no fallen validaciones si algo va vacío)
+                const existingTutor = await Tutor.findById(existing.tutor_id);
                 await Tutor.update(existing.tutor_id, {
-                    nombre: req.body.tutor_nombre || existing.tutor_nombre || 'N/D',
-                    parentesco: req.body.tutor_parentesco || 'N/D',
-                    email: req.body.tutor_email || null,
-                    telefono: req.body.tutor_telefono || null
+                    nombre: req.body.tutor_nombre || existingTutor?.nombre || 'N/D',
+                    parentesco: req.body.tutor_parentesco || existingTutor?.parentesco || 'N/D',
+                    email: req.body.tutor_email !== undefined ? req.body.tutor_email : (existingTutor?.email || null),
+                    telefono: req.body.tutor_telefono !== undefined ? req.body.tutor_telefono : (existingTutor?.telefono || null),
+                    password: req.body.tutor_password || undefined // Solo actualizar si envían nueva
                 });
             }
 

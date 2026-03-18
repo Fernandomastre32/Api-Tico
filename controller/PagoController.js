@@ -28,6 +28,26 @@ class PagoController {
             res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }
+
+    static async updatePago(req, res) {
+        try {
+            const pago = await Pago.update(req.params.id, req.body);
+            if (!pago) return res.status(404).json({ message: "Registro de pago no encontrado" });
+            res.json({ message: "Pago actualizado correctamente", data: pago });
+        } catch (error) {
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
+        }
+    }
+
+    static async deletePago(req, res) {
+        try {
+            const result = await Pago.delete(req.params.id);
+            if (!result) return res.status(404).json({ message: "Registro de pago no encontrado" });
+            res.json({ message: "Registro de pago eliminado" });
+        } catch (error) {
+            res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
+        }
+    }
 }
 
 export default PagoController;

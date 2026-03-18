@@ -1,7 +1,7 @@
 import Tutor from '../models/TutoresModels.js';
 import Paciente from '../models/PacienteModels.js'; // Necesario porque buscas los pacientes abajo
 import jwt from 'jsonwebtoken'; // Necesario para crear el token
-// import bcrypt from 'bcrypt'; // COMENTADO POR AHORA: Lo usaremos cuando las contraseñas en BD estén encriptadas
+import bcrypt from 'bcryptjs'; // <-- ¡ESTA ES LA LÍNEA QUE SE BORRÓ!
 import crypto from 'crypto'; // NUEVO: Herramienta para generar el UUID
 
 

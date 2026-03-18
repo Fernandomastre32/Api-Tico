@@ -1,5 +1,5 @@
 import express from 'express';
-import PacienteController from '../controller/Pacientescontroller.js';
+import PacienteController from '../controller/PacientesController.js';
 import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();

@@ -1,5 +1,7 @@
 import pool from '../config/db.js';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
+
+const SALT_ROUNDS = 10;
 
 class Tutor {
         static async buscarPorUsuarioOCorreo(usuario) {
@@ -34,7 +36,16 @@ static async buscarPorUsuarioOCorreo(usuario) {
     }
 
     static async update(id, data) {
-        const { nombre, parentesco, email, telefono } = data;
+        const { nombre, parentesco, email, telefono, password } = data;
+        // Solo actualizar password si se proporciona, hasheando con bcrypt
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+            const result = await pool.query(
+                'UPDATE tutores SET nombre = $1, parentesco = $2, email = $3, telefono = $4, password = $5 WHERE id = $6 RETURNING *',
+                [nombre, parentesco, email, telefono, hashedPassword, id]
+            );
+            return result.rows[0];
+        }
         const result = await pool.query(
             'UPDATE tutores SET nombre = $1, parentesco = $2, email = $3, telefono = $4 WHERE id = $5 RETURNING *',
             [nombre, parentesco, email, telefono, id]

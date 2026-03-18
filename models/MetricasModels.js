@@ -2,10 +2,9 @@ import pool from '../config/db.js';
 
 class MetricasIA {
     static async create(data) {
-        // Agregamos tiempo_reaccion_ms a la extracción
+        // Extraemos todos los datos que manda Unity
         const { paciente_id, cita_id, frustracion, latencia_ms, presion_toque, tiempo_reaccion_ms } = data;
-
-        // Actualizamos la consulta para insertar los 6 valores
+        
         const result = await pool.query(
             'INSERT INTO metricas_ia (paciente_id, cita_id, frustracion, latencia_ms, presion_toque, tiempo_reaccion_ms) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
             [paciente_id, cita_id, frustracion, latencia_ms, presion_toque, tiempo_reaccion_ms]

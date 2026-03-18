@@ -11,12 +11,19 @@ class Tutor {
         const result = await pool.query('SELECT * FROM tutores');
         return result.rows;
     }
-
+static async buscarPorUsuarioOCorreo(usuario) {
+        const query = 'SELECT * FROM tutores WHERE email = $1 OR telefono::text = $1';
+        const { rows } = await pool.query(query, [usuario]);
+        return rows[0];
+    }
     static async create(data) {
-        const { nombre, parentesco, email, telefono } = data;
+        const { nombre, parentesco, email, telefono, password } = data;
+        // Hashear la contraseña con bcrypt
+        const plainPassword = password || 'temporal123';
+        const hashedPassword = await bcrypt.hash(plainPassword, SALT_ROUNDS);
         const result = await pool.query(
-            'INSERT INTO tutores (nombre, parentesco, email, telefono) VALUES ($1, $2, $3, $4) RETURNING *',
-            [nombre, parentesco, email, telefono]
+            'INSERT INTO tutores (nombre, parentesco, email, telefono, password) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [nombre, parentesco, email, telefono, hashedPassword]
         );
         return result.rows[0];
     }

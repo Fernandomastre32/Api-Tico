@@ -8,7 +8,12 @@ class Especialista {
                     telefono, cedula_profesional, cedula_verificada, 
                     firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma,
                     foto_url, biografia, fecha_nacimiento,
+<<<<<<< HEAD
                     (session_token IS NOT NULL) AS en_linea
+=======
+                    -- Intentar traer session_token solo si existe (para el front/debug)
+                    (SELECT 'activo' FROM information_schema.columns WHERE table_name='especialistas' AND column_name='session_token' LIMIT 1) as session_token_exists
+>>>>>>> @{-1}
              FROM especialistas
              ORDER BY id ASC`
         );
@@ -73,8 +78,16 @@ class Especialista {
     }
 
     static async updateSession(id, sessionToken) {
-        console.log(`[DEBUG] updateSession ejecutando -> id: ${id}, token: ${sessionToken}`);
-        await pool.query('UPDATE especialistas SET session_token = $1 WHERE id = $2', [sessionToken, id]);
+        try {
+            await pool.query('UPDATE especialistas SET session_token = $1 WHERE id = $2', [sessionToken, id]);
+            console.log(`[AUTH] session_token actualizado para id: ${id}`);
+        } catch (error) {
+            if (error.code === '42703') { // Undefined column
+                console.warn(`[WARN] La columna 'session_token' no existe. Ejecuta: ALTER TABLE especialistas ADD COLUMN session_token VARCHAR(255);`);
+            } else {
+                console.error('[DATABASE ERROR] updateSession:', error);
+            }
+        }
     }
 }
 

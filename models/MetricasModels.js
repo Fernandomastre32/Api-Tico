@@ -13,9 +13,23 @@ class MetricasIA {
         return result.rows[0];
     }
 
+    static async findAll() {
+        const result = await pool.query(`
+            SELECT m.*, p.nombre AS paciente_nombre
+            FROM metricas_ia m
+            LEFT JOIN pacientes p ON m.paciente_id = p.id
+            ORDER BY m.fecha_registro DESC
+        `);
+        return result.rows;
+    }
+
     static async findByPaciente(paciente_id) {
         const result = await pool.query(
-            'SELECT * FROM metricas_ia WHERE paciente_id = $1 ORDER BY fecha_registro DESC',
+            `SELECT m.*, p.nombre AS paciente_nombre
+             FROM metricas_ia m
+             LEFT JOIN pacientes p ON m.paciente_id = p.id
+             WHERE m.paciente_id = $1
+             ORDER BY m.fecha_registro DESC`, // Cambiado a DESC para ver las más recientes primero
             [paciente_id]
         );
         return result.rows;

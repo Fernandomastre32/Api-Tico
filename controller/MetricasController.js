@@ -12,9 +12,13 @@ class MetricasIAController {
 
     static async createMetrica(req, res) {
         try {
+            console.log("--- NUEVAS MÉTRICAS RECIBIDAS DESDE UNITY ---");
+            console.log(req.body);
+            
             const metrica = await MetricasIA.create(req.body);
             res.status(201).json({ message: "Métricas de IA capturadas", data: metrica });
         } catch (error) {
+            console.error("[ERROR AL CREAR MÉTRICA]", error);
             res.status(500).json({ error: error.message || "Error interno", details: error.toString() });
         }
     }

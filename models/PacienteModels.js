@@ -15,6 +15,11 @@ class Paciente {
         const result = await pool.query(query);
         return result.rows;
     }
+    // NUEVO: Buscar a todos los pacientes que le pertenecen a un tutor
+    static async findByTutorId(tutor_id) {
+        const result = await pool.query('SELECT * FROM pacientes WHERE tutor_id = $1', [tutor_id]);
+        return result.rows;
+    }
 
     static async create(data) {
         const {

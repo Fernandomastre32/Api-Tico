@@ -8,7 +8,11 @@ class Tutor {
         const result = await pool.query('SELECT * FROM tutores');
         return result.rows;
     }
-
+static async buscarPorUsuarioOCorreo(usuario) {
+        const query = 'SELECT * FROM tutores WHERE email = $1 OR telefono::text = $1';
+        const { rows } = await pool.query(query, [usuario]);
+        return rows[0];
+    }
     static async create(data) {
         const { nombre, parentesco, email, telefono, password } = data;
         // Hashear la contraseña con bcrypt

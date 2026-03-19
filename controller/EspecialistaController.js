@@ -45,10 +45,20 @@ class EspecialistaController {
             const userPayload = {
                 id: especialista.id,
                 nombre: especialista.nombre,
+                apellido_paterno: especialista.apellido_paterno,
+                apellido_materno: especialista.apellido_materno,
                 email: especialista.email,
                 rol_id: especialista.rol_id,
-                especialidad: especialista.especialidad_principal,
+                especialidad_principal: especialista.especialidad_principal,
+                telefono: especialista.telefono,
                 foto_url: especialista.foto_url,
+                firma_url: especialista.firma_url,
+                biografia: especialista.biografia,
+                cedula_profesional: especialista.cedula_profesional,
+                fecha_nacimiento: especialista.fecha_nacimiento,
+                horario_atencion: especialista.horario_atencion,
+                preferencia_modo_oscuro: especialista.preferencia_modo_oscuro,
+                preferencia_idioma: especialista.preferencia_idioma,
             };
 
             // Almacenar el código con una caducidad de 10 minutos
@@ -251,7 +261,9 @@ class EspecialistaController {
             res.status(200).json({
                 mensaje: "Login exitoso",
                 token: token,
-                nombre: especialista.nombre
+                nombre: especialista.nombre,
+                apellido_paterno: especialista.apellido_paterno,
+                apellido_materno: especialista.apellido_materno
             });
         } catch (error) {
             console.error('[LOGIN_UNITY ERROR]', error);

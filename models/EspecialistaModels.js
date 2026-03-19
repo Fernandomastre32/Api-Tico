@@ -4,16 +4,11 @@ import bcrypt from 'bcryptjs';
 class Especialista {
     static async findAll() {
         const result = await pool.query(
-            `SELECT id, nombre, email, especialidad_principal, rol_id, estado_activo,
+            `SELECT id, nombre, apellido_paterno, apellido_materno, email, especialidad_principal, rol_id, estado_activo,
                     telefono, cedula_profesional, cedula_verificada, 
                     firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma,
                     foto_url, biografia, fecha_nacimiento,
-<<<<<<< HEAD
                     (session_token IS NOT NULL) AS en_linea
-=======
-                    -- Intentar traer session_token solo si existe (para el front/debug)
-                    (SELECT 'activo' FROM information_schema.columns WHERE table_name='especialistas' AND column_name='session_token' LIMIT 1) as session_token_exists
->>>>>>> @{-1}
              FROM especialistas
              ORDER BY id ASC`
         );
@@ -27,21 +22,21 @@ class Especialista {
     }
 
     static async create(data) {
-        const { nombre, email, password, especialidad_principal, rol_id, cedula_profesional, cedula_verificada, telefono, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento } = data;
+        const { nombre, apellido_paterno, apellido_materno, email, password, especialidad_principal, rol_id, cedula_profesional, cedula_verificada, telefono, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento } = data;
 
         // Cifrado en reposo: Hash de la contraseña antes de guardar
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const result = await pool.query(
-            'INSERT INTO especialistas (nombre, email, password, especialidad_principal, rol_id, cedula_profesional, cedula_verificada, telefono, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, nombre, email, especialidad_principal, rol_id, estado_activo, cedula_profesional, cedula_verificada, telefono, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento',
-            [nombre, email, hashedPassword, especialidad_principal, rol_id, cedula_profesional || null, cedula_verificada || false, telefono || null, firma_url || null, horario_atencion || null, preferencia_modo_oscuro || false, preferencia_idioma || 'es', foto_url || null, biografia || null, fecha_nacimiento || null]
+            'INSERT INTO especialistas (nombre, apellido_paterno, apellido_materno, email, password, especialidad_principal, rol_id, cedula_profesional, cedula_verificada, telefono, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id, nombre, apellido_paterno, apellido_materno, email, especialidad_principal, rol_id, estado_activo, cedula_profesional, cedula_verificada, telefono, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento',
+            [nombre, apellido_paterno || null, apellido_materno || null, email, hashedPassword, especialidad_principal, rol_id, cedula_profesional || null, cedula_verificada || false, telefono || null, firma_url || null, horario_atencion || null, preferencia_modo_oscuro || false, preferencia_idioma || 'es', foto_url || null, biografia || null, fecha_nacimiento || null]
         );
         return result.rows[0];
     }
 
     static async findById(id) {
-        const result = await pool.query('SELECT id, nombre, email, especialidad_principal, rol_id, estado_activo, telefono, cedula_profesional, cedula_verificada, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento FROM especialistas WHERE id = $1', [id]);
+        const result = await pool.query('SELECT id, nombre, apellido_paterno, apellido_materno, email, especialidad_principal, rol_id, estado_activo, telefono, cedula_profesional, cedula_verificada, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento FROM especialistas WHERE id = $1', [id]);
         return result.rows[0];
     }
 
@@ -52,17 +47,17 @@ class Especialista {
     }
 
     static async update(id, data) {
-        const { nombre, email, especialidad_principal, rol_id, cedula_profesional, cedula_verificada, estado_activo, telefono, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento } = data;
+        const { nombre, apellido_paterno, apellido_materno, email, especialidad_principal, rol_id, cedula_profesional, cedula_verificada, estado_activo, telefono, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento } = data;
 
-        let queryStr = 'UPDATE especialistas SET nombre = $1, email = $2, especialidad_principal = $3, rol_id = $4, cedula_profesional = $5, cedula_verificada = $6, telefono = $7, firma_url = $8, horario_atencion = $9, preferencia_modo_oscuro = $10, preferencia_idioma = $11, foto_url = $12, biografia = $13, fecha_nacimiento = $14';
-        let queryParams = [nombre, email, especialidad_principal, rol_id, cedula_profesional || null, cedula_verificada || false, telefono || null, firma_url || null, horario_atencion || null, preferencia_modo_oscuro || false, preferencia_idioma || 'es', foto_url || null, biografia || null, fecha_nacimiento || null];
+        let queryStr = 'UPDATE especialistas SET nombre = $1, apellido_paterno = $2, apellido_materno = $3, email = $4, especialidad_principal = $5, rol_id = $6, cedula_profesional = $7, cedula_verificada = $8, telefono = $9, firma_url = $10, horario_atencion = $11, preferencia_modo_oscuro = $12, preferencia_idioma = $13, foto_url = $14, biografia = $15, fecha_nacimiento = $16';
+        let queryParams = [nombre, apellido_paterno || null, apellido_materno || null, email, especialidad_principal, rol_id, cedula_profesional || null, cedula_verificada || false, telefono || null, firma_url || null, horario_atencion || null, preferencia_modo_oscuro || false, preferencia_idioma || 'es', foto_url || null, biografia || null, fecha_nacimiento || null];
 
         if (estado_activo !== undefined) {
-            queryStr += `, estado_activo = $15`;
+            queryStr += `, estado_activo = $17`;
             queryParams.push(estado_activo);
         }
 
-        queryStr += ` WHERE id = $${queryParams.length + 1} RETURNING id, nombre, email, especialidad_principal, rol_id, estado_activo, telefono, cedula_profesional, cedula_verificada, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento`;
+        queryStr += ` WHERE id = $${queryParams.length + 1} RETURNING id, nombre, apellido_paterno, apellido_materno, email, especialidad_principal, rol_id, estado_activo, telefono, cedula_profesional, cedula_verificada, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento`;
         queryParams.push(id);
 
         const result = await pool.query(queryStr, queryParams);

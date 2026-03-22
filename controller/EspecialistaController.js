@@ -177,7 +177,8 @@ class EspecialistaController {
                 return res.status(400).json({ errors: errors.array() });
             }
             if (req.body.cedula_profesional) {
-                req.body.cedula_verificada = await verificarCedulaSEP(req.body.cedula_profesional);
+                const isVerified = await verificarCedulaSEP(req.body.cedula_profesional);
+                req.body.cedula_verificada = isVerified === true;
             }
             const especialista = await Especialista.create(req.body);
             res.status(201).json({ message: 'Especialista creado exitosamente', data: especialista });
@@ -200,6 +201,11 @@ class EspecialistaController {
 
     static async updateEspecialista(req, res) {
         try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
+            }
+
             const existing = await Especialista.findById(req.params.id);
             if (!existing) return res.status(404).json({ message: 'Especialista no encontrado' });
 
@@ -207,7 +213,8 @@ class EspecialistaController {
             const dataToUpdate = { ...existing, ...req.body };
 
             if (req.body.cedula_profesional) {
-                dataToUpdate.cedula_verificada = await verificarCedulaSEP(req.body.cedula_profesional);
+                const isVerified = await verificarCedulaSEP(req.body.cedula_profesional);
+                dataToUpdate.cedula_verificada = isVerified === true;
             }
 
             const especialista = await Especialista.update(req.params.id, dataToUpdate);
@@ -228,7 +235,7 @@ class EspecialistaController {
             res.status(500).json({ message: 'Error interno del servidor' });
         }
     }
-     static async loginUnity(req, res) {
+    static async loginUnity(req, res) {
         try {
             const { usuario, password } = req.body;
             const especialista = await Especialista.buscarPorUsuarioOCorreo(usuario);

@@ -30,7 +30,7 @@ class Especialista {
 
         const result = await pool.query(
             'INSERT INTO especialistas (nombre, apellido_paterno, apellido_materno, email, password, especialidad_principal, rol_id, cedula_profesional, cedula_verificada, telefono, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id, nombre, apellido_paterno, apellido_materno, email, especialidad_principal, rol_id, estado_activo, cedula_profesional, cedula_verificada, telefono, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento',
-            [nombre, apellido_paterno || null, apellido_materno || null, email, hashedPassword, especialidad_principal, rol_id, cedula_profesional || null, cedula_verificada || false, telefono || null, firma_url || null, horario_atencion || null, preferencia_modo_oscuro || false, preferencia_idioma || 'es', foto_url || null, biografia || null, fecha_nacimiento || null]
+            [nombre, apellido_paterno || null, apellido_materno || null, email, hashedPassword, especialidad_principal, rol_id, cedula_profesional || null, cedula_verificada || false, telefono || null, firma_url || null, horario_atencion || null, preferencia_modo_oscuro || false, preferencia_idioma || 'es', foto_url || null, (biografia != null && biografia !== undefined) ? biografia : null, fecha_nacimiento || null]
         );
         return result.rows[0];
     }
@@ -50,7 +50,7 @@ class Especialista {
         const { nombre, apellido_paterno, apellido_materno, email, especialidad_principal, rol_id, cedula_profesional, cedula_verificada, estado_activo, telefono, firma_url, horario_atencion, preferencia_modo_oscuro, preferencia_idioma, foto_url, biografia, fecha_nacimiento } = data;
 
         let queryStr = 'UPDATE especialistas SET nombre = $1, apellido_paterno = $2, apellido_materno = $3, email = $4, especialidad_principal = $5, rol_id = $6, cedula_profesional = $7, cedula_verificada = $8, telefono = $9, firma_url = $10, horario_atencion = $11, preferencia_modo_oscuro = $12, preferencia_idioma = $13, foto_url = $14, biografia = $15, fecha_nacimiento = $16';
-        let queryParams = [nombre, apellido_paterno || null, apellido_materno || null, email, especialidad_principal, rol_id, cedula_profesional || null, cedula_verificada || false, telefono || null, firma_url || null, horario_atencion || null, preferencia_modo_oscuro || false, preferencia_idioma || 'es', foto_url || null, biografia || null, fecha_nacimiento || null];
+        let queryParams = [nombre, apellido_paterno || null, apellido_materno || null, email, especialidad_principal, rol_id, cedula_profesional || null, cedula_verificada || false, telefono || null, firma_url || null, horario_atencion || null, preferencia_modo_oscuro || false, preferencia_idioma || 'es', foto_url || null, (biografia != null && biografia !== undefined) ? biografia : null, fecha_nacimiento || null];
 
         if (estado_activo !== undefined) {
             queryStr += `, estado_activo = $17`;

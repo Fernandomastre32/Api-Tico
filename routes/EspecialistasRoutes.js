@@ -129,14 +129,24 @@ const createEspecialistaValidations = [
     body('nombre').notEmpty().withMessage('Nombre es requerido').trim().escape(),
     body('email').isEmail().withMessage('Debe ser un email válido').normalizeEmail(),
     body('password').isLength({ min: 8 }).withMessage('Contraseña mínimo 8 caracteres').trim(),
-    body('especialidad_principal').notEmpty().withMessage('Especialidad es requerida').trim().escape()
+    body('especialidad_principal').notEmpty().withMessage('Especialidad es requerida').trim().escape(),
+    body('cedula_profesional').optional({ checkFalsy: true }).isNumeric().withMessage('La cédula debe ser numérica').isLength({ min: 7, max: 10 }).withMessage('La cédula debe tener entre 7 y 10 dígitos')
+];
+
+const updateEspecialistaValidations = [
+    body('nombre').optional().notEmpty().withMessage('Nombre es requerido').trim().escape(),
+    body('email').optional().isEmail().withMessage('Debe ser un email válido').normalizeEmail(),
+    body('especialidad_principal').optional().notEmpty().withMessage('Especialidad es requerida').trim().escape(),
+    body('cedula_profesional').optional({ checkFalsy: true }).isNumeric().withMessage('La cédula debe ser numérica').isLength({ min: 7, max: 10 }).withMessage('La cédula debe tener entre 7 y 10 dígitos'),
+    // Sin .escape() para no corromper caracteres especiales en la biografía (comillas, acentos, etc.)
+    body('biografia').optional({ nullable: true }).trim()
 ];
 
 router.post('/especialistas', createEspecialistaValidations, EspecialistaController.createEspecialista);
 
 // Protección IDOR: un especialista solo puede ver/editar su propio perfil, Admin puede todo
 router.get('/especialistas/:id', verifyToken, checkOwnerOrAdmin, EspecialistaController.getEspecialistaById);
-router.put('/especialistas/:id', verifyToken, checkOwnerOrAdmin, EspecialistaController.updateEspecialista);
+router.put('/especialistas/:id', verifyToken, checkOwnerOrAdmin, updateEspecialistaValidations, EspecialistaController.updateEspecialista);
 router.delete('/especialistas/:id', verifyToken, authorize([1]), EspecialistaController.deleteEspecialista);
 
 export default router;

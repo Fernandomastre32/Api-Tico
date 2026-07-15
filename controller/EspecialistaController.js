@@ -12,8 +12,6 @@ dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Almacén temporal para los códigos 2FA (en producción usar Redis o DB)
-// Estructura: { email: { code, expiresAt, userPayload } }
 const temporaryCodes = new Map();
 
 class EspecialistaController {
